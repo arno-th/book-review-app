@@ -1,0 +1,19 @@
+services:
+  app:
+    build: .
+    volumes:
+      - .:/django
+    ports:
+      - 8000:8000
+    image: app:django
+    container_name: book-review-django
+    command: python manage.py runserver 0.0.0.0:8000
+    depends_on:
+      - db 
+  db:
+    image: postgres
+    container_name: book-review-db
+    environment:
+      POSTGRES_PASSWORD: 'admin'
+      POSTGRES_USER: 'admin'
+      POSTGRES_DB: 'postgres'
