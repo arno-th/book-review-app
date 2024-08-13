@@ -1,0 +1,15 @@
+.book-details {
+    border-color: black;
+    border-style: solid;
+    background-color: darkgrey;
+}
+.book-details:hover {
+    background-color: lightblue;
+    cursor: pointer;
+}
+
+.new-book-button {
+    border-color: black;
+    border-radius: 3px;
+    background-color: blue;
+}

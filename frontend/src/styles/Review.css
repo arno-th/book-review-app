@@ -1,0 +1,21 @@
+/* .book-details {
+    border-color: black;
+    border-style: solid;
+    background-color: darkgrey;
+}
+.book-details:hover {
+    background-color: blue;
+    cursor: pointer;
+} */
+
+.new-review-button {
+    border-color: black;
+    border-radius: 3px;
+    background-color: blue;
+}
+
+.review-container {
+    border-color: black;
+    border-style: solid;
+    border-radius: 1px;
+}
