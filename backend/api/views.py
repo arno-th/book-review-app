@@ -12,162 +12,60 @@ from .serializers import (
     ReviewSerializer
 )
 
-#################################################################
-# Users
-#################################################################
 
-class CreateUserView(generics.CreateAPIView):
+class UserViewSet(viewsets.ReadOnlyModelViewSet):  # Only allow reading data (no updates)
+    """
+    A viewset for viewing users.
+    """
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]  # Require authentication to view users
 
-#################################################################
-# Authors
-#################################################################
 
-class AuthorList(generics.ListAPIView):
-    serializer_class = AuthorSerializer
-    permission_classes = [IsAuthenticated]
-    queryset = Author.objects.all()
-
-class AuthorCreate(generics.CreateAPIView):
-    serializer_class = AuthorSerializer
-    permission_classes = [IsAuthenticated]
-    queryset = Author.objects.all()
-
-    def perform_create(self, serializer: AuthorSerializer):
-        if serializer.is_valid():
-            serializer.save()
-        else:
-            print(serializer.errors)
-
-class AuthorDelete(generics.DestroyAPIView):
-    serializer_class = AuthorSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        if user.is_staff:
-            return Author.objects.all()
-        else:
-            return Author.objects.none()
-
-#################################################################
-# Books
-#################################################################
-
-class BookList(generics.ListAPIView):
-    serializer_class = BookSerializer
-    permission_classes = [IsAuthenticated]
+class BookViewSet(viewsets.ModelViewSet):
+    """
+    A viewset for viewing and editing books.
+    """
     queryset = Book.objects.all()
 
-class BookGet(generics.RetrieveAPIView):
-    serializer_class = BookSerializer
-    permission_classes = [IsAuthenticated]
-    queryset = Book.objects.all()
+    def get_serializer_class(self):
+        if self.action == 'retrieve' and self.get_object().has_full_details:
+            return BookDetailSerializer
+        return BookBasicSerializer
 
-class BookCreate(generics.CreateAPIView):
-    serializer_class = BookSerializer
-    permission_classes = [IsAuthenticated]
-    queryset = Book.objects.all()
+    # Custom action to fetch full book details (when a discussion thread is created)
+    @action(detail=True, methods=['get'])
+    def fetch_details(self, request, pk=None):
+        book = self.get_object()
+        if not book.has_full_details:
+            # Call your external API function here to fetch and update details
+            # Example: fetch_full_book_details(book)
+            book.has_full_details = True
+            book.save()
+        serializer = BookDetailSerializer(book)
+        return Response(serializer.data)
 
-    def perform_create(self, serializer: BookSerializer):
-        if serializer.is_valid():
-            serializer.save()
-        else:
-            print(serializer.errors)
-
-class BookDelete(generics.DestroyAPIView):
-    serializer_class = BookSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        if user.is_staff:
-            return Book.objects.all()
-        else:
-            return Book.objects.none()
-
-#################################################################
-# Notes
-#################################################################
-class NoteListCreate(generics.ListCreateAPIView):
-    serializer_class = NoteSerializer
-    permission_classes = [IsAuthenticated]
-    def get_queryset(self):
-        user = self.request.user
-        return Note.objects.filter(author=user)
-
-    def perform_create(self, serializer: NoteSerializer):
-        if serializer.is_valid():
-            serializer.save(author=self.request.user)
-        else:
-            print(serializer.errors)
-
-class NoteDelete(generics.DestroyAPIView):
-    serializer_class = NoteSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        return Note.objects.filter(author=user)
-
-#################################################################
-# Threads
-#################################################################
-class ThreadListCreate(generics.ListCreateAPIView):
-    serializer_class = ThreadSerializer
-    permission_classes = [IsAuthenticated]
-    queryset = Thread.objects.all()
-
-    def perform_create(self, serializer: ThreadSerializer):
-        if serializer.is_valid():
-            serializer.save(author=self.request.user)
-        else:
-            print(serializer.errors)
-
-class ThreadDelete(generics.DestroyAPIView):
-    serializer_class = ThreadSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        return Thread.objects.filter(author=user)
-
-#################################################################
-# Reviews
-#################################################################
-
-class ReviewList(generics.ListAPIView):
-    serializer_class = ReviewSerializer
-    permission_classes = [IsAuthenticated]
+class ReviewViewSet(viewsets.ModelViewSet):
+    """
+    A viewset for viewing and editing reviews.
+    """
     queryset = Review.objects.all()
-
-class ReviewGet(generics.RetrieveAPIView):
-    serializer_class = ReviewSerializer
-    permission_classes = [IsAuthenticated]
-    queryset = Review.objects.all()
-
-class ReviewCreate(generics.CreateAPIView):
-    serializer_class = ReviewSerializer
-    permission_classes = [IsAuthenticated]
-    queryset = Review.objects.all()
-
-    def perform_create(self, serializer: ReviewSerializer):
-        if serializer.is_valid():
-            print("test", self.request)
-            serializer.save(author=self.request.user)
-        else:
-            print(serializer.errors)
-            print("test", self.request)
-
-class ReviewDelete(generics.DestroyAPIView):
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        user = self.request.user
-        if user.is_staff:
-            return Review.objects.all()
-        else:
-            return Review.objects.none()
+class DiscussionThreadViewSet(viewsets.ModelViewSet):
+    """
+    A viewset for viewing and editing discussion threads.
+    """
+    queryset = DiscussionThread.objects.all()
+    serializer_class = DiscussionThreadSerializer
+    permission_classes = [IsAuthenticated]  # Adjust permissions as needed
+
+class CommentViewSet(viewsets.ModelViewSet):
+    """
+    A viewset for viewing and editing comments.
+    """
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated]  # Adjust permissions as needed
+

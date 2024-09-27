@@ -1,60 +1,50 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Author, Book, Note, Thread, Review
+from .models import Book, DiscussionThread, Comment, Review
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "username", "password"]
+        fields = ["id", "username", "password", "firstname", "lastname"]
         extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
         return user
 
-class AuthorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Author
-        fields = ["id", "created_at", "name"]
-        extra_kwargs = {"created_at": {"read_only": True}}
-
-class BookSerializer(serializers.ModelSerializer):
-    author = serializers.SlugRelatedField(slug_field='name', queryset=Author.objects.all())
+class BookBasicSerializer(serializers.ModelSerializer):
     class Meta:
         model = Book
-        fields = ["id", "created_at", "title", "description", "isbn", "author"]
-        extra_kwargs = {
-            "created_at": {"read_only": True},
-        }
+        fields = ['id', 'title', 'author', 'isbn']
 
-class NoteSerializer(serializers.ModelSerializer):
+class BookDetailSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Note
-        fields = ["id", "created_at", "title", "content", "author", "book"]
-        extra_kwargs = {
-            "created_at": {"read_only": True},
-            "author": {"read_only": True},
-        }
+        model = Book
+        fields = ['id', 'title', 'author', 'isbn', 'description', 'publication_date', 'cover_image_url']
 
-class ThreadSerializer(serializers.ModelSerializer):
+
+class CommentSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField()  # Show the username of the commenter
+    
     class Meta:
-        model = Thread
-        fields = ["id", "created_at", "content", "author", "note"]
-        extra_kwargs = {
-            "created_at": {"read_only": True},
-            "author": {"read_only": True},
-            "note": {"read_only": True},
-        }
+        model = Comment
+        fields = ['id', 'thread', 'user', 'comment_text', 'created_at', 'parent_comment']
+        read_only_fields = ['created_at']
+
+
+class DiscussionThreadSerializer(serializers.ModelSerializer):
+    created_by = serializers.StringRelatedField()  # Show username instead of just ID
+    
+    class Meta:
+        model = DiscussionThread
+        fields = ['id', 'book', 'title', 'created_by', 'created_at']
+        read_only_fields = ['created_at']
+
 
 class ReviewSerializer(serializers.ModelSerializer):
-    author = serializers.SlugRelatedField(slug_field='username', queryset=User.objects.all())
-    book = serializers.SlugRelatedField(slug_field='title', queryset=Book.objects.all())
-
+    user = serializers.StringRelatedField()  # Display the user's name instead of just their ID
+    
     class Meta:
         model = Review
-        fields = ["id", "created_at", "author", "book", "rating", "content"]
-        extra_kwargs = {
-            "created_at": {"read_only": True},
-            # "author": {"read_only": True},
-            # "book": {"read_only": True},
-        }
+        fields = ['id', 'book', 'user', 'rating', 'review_text', 'created_at']
+        read_only_fields = ['created_at']
